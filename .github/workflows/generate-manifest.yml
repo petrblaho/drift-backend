@@ -1,0 +1,35 @@
+name: Generate manifest
+on: pull_request
+
+permissions:
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    if: ${{ github.actor == 'dependabot[bot]' }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # to pick up branches
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+      - name: Install poetry
+        run: pipx install poetry~=1.4.0
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+          cache: 'poetry'
+      - name: Install dependencies
+        run: poetry install --with dev --verbose
+      - name: Generate manifest
+        run: poetry run ./scripts/create-manifest.py
+      - name: Create commit and push
+        run: |
+          git config user.name 'Create-manifest-a-Bot'
+          git config user.email 'insights@redhat.com'
+          git add *-manifest
+          git commit -m "chore(manifest): update manifest" || echo "No new changes"
+          git push
