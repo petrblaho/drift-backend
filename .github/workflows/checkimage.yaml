@@ -15,7 +15,7 @@ jobs:
         run: sudo apt-get install -y skopeo
       - name: Check change
         run: |
-          skopeo inspect "docker://$(grep -Po '(?<=FROM )([^"]+)' Dockerfile)" | grep -Po '(?<="Digest": ")([^"]+)' > .baseimagedigest
+          skopeo inspect "docker://$(grep -Po '(?<=FROM |from )([^\ "]+)(?=\s+AS\s+base$|\s+as\s+base$)' Dockerfile | head -n1)" | grep -Po '(?<="Digest": ")([^"]+)' > .baseimagedigest
           docker run --rm --entrypoint sh -u 0 quay.io/cloudservices/drift-backend:latest -c \
             'microdnf upgrade -y > /dev/null; rpm -qa | sort | sha256sum' \
             >> .baseimagedigest
